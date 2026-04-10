@@ -193,7 +193,7 @@
 
   <div class="field">
     <label class="field-label">Rapportnummer (huidig)</label>
-    <input type="number" id="rapportNr" placeholder="250001" oninput="saveConfig()">
+    <input type="number" id="rapportNr" placeholder="26001" oninput="saveConfig()">
   </div>
 
   <div style="background:white;border-radius:var(--radius);padding:16px;margin-top:20px;border:1.5px solid var(--border);">
@@ -466,7 +466,7 @@ function init() {
 }
 
 function setDefaultRapportNummer() {
-  const nr = localStorage.getItem('config_rapportNr') || '250001';
+  const nr = localStorage.getItem('config_rapportNr') || '26001';
   formData['rapportnummer'] = nr;
 }
 
