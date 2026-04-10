@@ -8,6 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="AutoKeuring">
 <link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <title>AutoKeuring Pro</title>
 <style>
   :root {
@@ -148,6 +149,8 @@
   /* SEND BUTTON */
   .btn-send { background: #0f9d58; color: white; font-size: 14px; padding: 14px; border-radius: var(--radius-sm); border: none; width: 100%; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
   .btn-send:active { transform: scale(0.98); }
+  .btn-pdf { background: #c0392b; color: white; font-size: 14px; padding: 14px; border-radius: var(--radius-sm); border: none; width: 100%; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .btn-pdf:active { transform: scale(0.98); }
   .sheets-logo { width: 20px; height: 20px; }
 
   /* SPINNER */
@@ -754,6 +757,14 @@ function showSummary() {
     </svg>
     Opslaan naar Google Sheets
   </button>
+  <button class="btn-pdf" onclick="generatePDF()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="4" fill="rgba(255,255,255,0.2)"/>
+      <path d="M7 3h7l5 5v13a1 1 0 01-1 1H6a1 1 0 01-1-1V4a1 1 0 011-1z" stroke="white" stroke-width="1.5" fill="none"/>
+      <path d="M14 3v5h5M9 13h6M9 17h4" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Rapport downloaden als PDF
+  </button>
   <button class="btn btn-secondary" onclick="currentSection=0;renderSection();" style="width:100%;margin-bottom:12px;">← Terug naar bewerken</button>
   <button class="btn" style="width:100%;background:var(--accent2);color:var(--accent);border:1.5px solid var(--accent);margin-bottom:12px;" onclick="newKeuring()">+ Nieuwe keuring starten</button>`;
 
@@ -831,6 +842,217 @@ function showToast(msg) {
   t.textContent = msg;
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// PDF GENERATIE
+// ============================================================
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+  const W = 210; // A4 width mm
+  const margin = 14;
+  const colW = W - margin * 2;
+  let y = 0;
+
+  // Colors
+  const BLUE       = [21, 88, 214];
+  const BLUE_LIGHT = [232, 239, 254];
+  const GREEN      = [22, 163, 74];
+  const GREEN_LIGHT= [240, 253, 244];
+  const AMBER      = [217, 119, 6];
+  const AMBER_LIGHT= [255, 251, 235];
+  const RED        = [220, 38, 38];
+  const RED_LIGHT  = [254, 242, 242];
+  const GRAY_DARK  = [26, 31, 54];
+  const GRAY_MID   = [74, 85, 104];
+  const GRAY_LIGHT = [226, 232, 240];
+  const WHITE      = [255, 255, 255];
+
+  // ── helpers ──────────────────────────────────────────────
+  function checkPage(needed = 10) {
+    if (y + needed > 280) { doc.addPage(); y = 14; }
+  }
+
+  function setFont(style, size, color) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    doc.setTextColor(...(color || GRAY_DARK));
+  }
+
+  function drawRect(x, ry, w, h, color, radius = 0) {
+    doc.setFillColor(...color);
+    if (radius) doc.roundedRect(x, ry, w, h, radius, radius, 'F');
+    else doc.rect(x, ry, w, h, 'F');
+  }
+
+  function sectionHeader(icon, title) {
+    checkPage(12);
+    drawRect(margin, y, colW, 8, BLUE_LIGHT);
+    setFont('bold', 9, BLUE);
+    doc.text(title.toUpperCase(), margin + 3, y + 5.5);
+    y += 10;
+  }
+
+  function dataRow(label, value, isOdd) {
+    const rowH = 6.5;
+    checkPage(rowH + 2);
+    if (isOdd) drawRect(margin, y, colW, rowH, [248, 250, 252]);
+    setFont('normal', 8.5, GRAY_MID);
+    doc.text(label, margin + 3, y + 4.5);
+    setFont('bold', 8.5, GRAY_DARK);
+    const valStr = String(value || '—');
+    doc.text(valStr, margin + colW - 3, y + 4.5, { align: 'right', maxWidth: colW * 0.55 });
+    y += rowH;
+  }
+
+  // ── HEADER BANNER ────────────────────────────────────────
+  drawRect(0, 0, W, 32, BLUE);
+  setFont('bold', 18, WHITE);
+  doc.text('AUTO AANKOOPKEURING', margin, 13);
+  setFont('normal', 9, [180, 200, 255]);
+  doc.text('RAPPORT', margin, 20);
+
+  // Report number + date top-right
+  setFont('normal', 8, [180, 200, 255]);
+  doc.text(`Rapport: ${formData['rapportnummer'] || '—'}`, W - margin, 10, { align: 'right' });
+  doc.text(`Datum: ${formData['datum_inspectie'] || '—'}`, W - margin, 16, { align: 'right' });
+  doc.text(`Adviseur: ${formData['adviseur'] || '—'}`, W - margin, 22, { align: 'right' });
+  y = 36;
+
+  // ── VOERTUIG HIGHLIGHT CARD ──────────────────────────────
+  drawRect(margin, y, colW, 26, BLUE_LIGHT, 3);
+  setFont('bold', 14, BLUE);
+  const autoTitle = `${formData['merk'] || ''} ${formData['model'] || ''} ${formData['uitvoering'] || ''}`.trim() || 'Onbekend voertuig';
+  doc.text(autoTitle, margin + 4, y + 9);
+  setFont('normal', 9, GRAY_MID);
+  const sub1 = `Kenteken: ${formData['kenteken'] || '—'}   ·   ${formData['kilometerstand'] || '—'} km   ·   ${formData['brandstof'] || '—'}`;
+  doc.text(sub1, margin + 4, y + 16);
+  const sub2 = `Verkoopprijs: € ${formData['verkoopprijs'] || '—'}   ·   Dagwaarde: € ${formData['dagwaarde'] || '—'}`;
+  doc.text(sub2, margin + 4, y + 22);
+  y += 30;
+
+  // ── EINDOORDEEL BANNER ───────────────────────────────────
+  const advies = formData['advies'] || '';
+  let verdictColor = AMBER_LIGHT;
+  let verdictTextColor = AMBER;
+  let verdictBorderColor = AMBER;
+  if (advies === 'Aanraden') { verdictColor = GREEN_LIGHT; verdictTextColor = GREEN; verdictBorderColor = GREEN; }
+  if (advies === 'Afraden')  { verdictColor = RED_LIGHT;   verdictTextColor = RED;   verdictBorderColor = RED; }
+
+  drawRect(margin, y, colW, 18, verdictColor, 3);
+  doc.setDrawColor(...verdictBorderColor);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(margin, y, colW, 18, 3, 3, 'S');
+  setFont('bold', 13, verdictTextColor);
+  doc.text(advies || 'Neutraal', margin + 4, y + 7);
+  setFont('normal', 9, GRAY_MID);
+  doc.text(`Algemeen oordeel: ${formData['algemeen_oordeel'] || '—'}`, margin + 4, y + 13);
+  if (formData['reparatiekosten']) {
+    setFont('normal', 9, GRAY_MID);
+    doc.text(`Reparatiekosten: € ${formData['reparatiekosten']}   ·   Aanbevolen prijs: € ${formData['aanbevolen_prijs'] || '—'}`, W - margin, y + 13, { align: 'right' });
+  }
+  y += 22;
+
+  // Gebreken & opmerkingen
+  if (formData['gevonden_gebreken']) {
+    checkPage(16);
+    drawRect(margin, y, colW, 7, [255, 247, 237]);
+    setFont('bold', 8, AMBER);
+    doc.text('GEVONDEN GEBREKEN', margin + 3, y + 5);
+    y += 8;
+    setFont('normal', 8.5, GRAY_DARK);
+    const lines = doc.splitTextToSize(formData['gevonden_gebreken'], colW - 6);
+    lines.forEach(line => { checkPage(6); doc.text(line, margin + 3, y + 4); y += 5.5; });
+    y += 3;
+  }
+
+  if (formData['opmerkingen']) {
+    checkPage(16);
+    drawRect(margin, y, colW, 7, BLUE_LIGHT);
+    setFont('bold', 8, BLUE);
+    doc.text('EXTRA OPMERKINGEN', margin + 3, y + 5);
+    y += 8;
+    setFont('normal', 8.5, GRAY_DARK);
+    const lines = doc.splitTextToSize(formData['opmerkingen'], colW - 6);
+    lines.forEach(line => { checkPage(6); doc.text(line, margin + 3, y + 4); y += 5.5; });
+    y += 3;
+  }
+
+  // ── ALLE SECTIES ─────────────────────────────────────────
+  SECTIONS.forEach(sec => {
+    if (sec.custom === 'lakdikte') {
+      const entries = Object.entries(lakdikteData).filter(([k, v]) => v);
+      if (entries.length === 0) return;
+      checkPage(20);
+      y += 4;
+      sectionHeader('', `${sec.icon} ${sec.title}`);
+
+      // Two-column layout for lakdikte
+      const half = Math.ceil(entries.length / 2);
+      const leftEntries  = entries.slice(0, half);
+      const rightEntries = entries.slice(half);
+      const colHalf = (colW - 4) / 2;
+
+      leftEntries.forEach(([panel, waarde], i) => {
+        checkPage(7);
+        const rx = margin;
+        const ry2 = y;
+        const rowH = 6.5;
+        if (i % 2 === 0) drawRect(rx, ry2, colHalf, rowH, [248, 250, 252]);
+        setFont('normal', 8, GRAY_MID);
+        doc.text(panel, rx + 2, ry2 + 4.5);
+        const n = parseFloat(waarde);
+        const wColor = n <= 130 ? GREEN : n <= 200 ? AMBER : RED;
+        setFont('bold', 8, wColor);
+        doc.text(`${waarde} μm`, rx + colHalf - 2, ry2 + 4.5, { align: 'right' });
+
+        // Right column same row
+        if (rightEntries[i]) {
+          const [rPanel, rWaarde] = rightEntries[i];
+          const rx2 = margin + colHalf + 4;
+          if (i % 2 === 0) drawRect(rx2, ry2, colHalf, rowH, [248, 250, 252]);
+          setFont('normal', 8, GRAY_MID);
+          doc.text(rPanel, rx2 + 2, ry2 + 4.5);
+          const rn = parseFloat(rWaarde);
+          const rwColor = rn <= 130 ? GREEN : rn <= 200 ? AMBER : RED;
+          setFont('bold', 8, rwColor);
+          doc.text(`${rWaarde} μm`, rx2 + colHalf - 2, ry2 + 4.5, { align: 'right' });
+        }
+        y += rowH;
+      });
+      y += 2;
+      return;
+    }
+
+    if (!sec.fields) return;
+    const visibleFields = sec.fields.filter(f => !shouldHideGlobal(f) && formData[f.id]);
+    if (visibleFields.length === 0) return;
+
+    y += 4;
+    sectionHeader('', `${sec.icon} ${sec.title}`);
+    visibleFields.forEach((f, i) => {
+      dataRow(f.label, formData[f.id], i % 2 === 1);
+    });
+  });
+
+  // ── FOOTER ───────────────────────────────────────────────
+  const pageCount = doc.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(...GRAY_LIGHT);
+    doc.setLineWidth(0.3);
+    doc.line(margin, 289, W - margin, 289);
+    setFont('normal', 7.5, [160, 174, 192]);
+    doc.text('AutoKeuring Pro  ·  Dit rapport is gebaseerd op visuele inspectie en testrit', margin, 293);
+    doc.text(`Pagina ${p} van ${pageCount}`, W - margin, 293, { align: 'right' });
+  }
+
+  // ── SAVE ─────────────────────────────────────────────────
+  const filename = `Keuring_${formData['kenteken'] || 'auto'}_${formData['rapportnummer'] || ''}_${(formData['datum_inspectie'] || '').replace(/-/g,'')}.pdf`;
+  doc.save(filename);
+  showToast('📄 PDF opgeslagen!');
 }
 
 // ============================================================
