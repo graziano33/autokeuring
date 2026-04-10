@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1558d6">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="AutoKeuring">
+<link rel="manifest" href="manifest.json">
+<title>AutoKeuring Pro</title>
+<style>
+  :root {
+    --primary: #f4f6fb;
+    --accent: #1558d6;
+    --accent2: #e8effe;
+    --surface: #ffffff;
+    --surface2: #f0f4ff;
+    --card: #ffffff;
+    --text: #1a1f36;
+    --text2: #4a5568;
+    --text3: #a0aec0;
+    --border: #e2e8f0;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--primary);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: var(--accent);
+    border-bottom: none;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo { width: 32px; height: 32px; background: rgba(255,255,255,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .header h1 { font-size: 16px; font-weight: 600; color: #ffffff; }
+  .header-subtitle { font-size: 11px; color: rgba(255,255,255,0.75); }
+  .btn-icon { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); color: #ffffff; width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+
+  /* PROGRESS BAR */
+  .progress-bar { background: var(--surface); padding: 8px 16px; border-bottom: 1px solid var(--border); }
+  .progress-track { background: #e2e8f0; height: 5px; border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s ease; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 11px; color: var(--text2); margin-bottom: 6px; }
+
+  /* SECTION TABS */
+  .tabs { background: var(--surface); padding: 8px 16px; overflow-x: auto; white-space: nowrap; display: flex; gap: 8px; border-bottom: 1px solid var(--border); scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--border); cursor: pointer; font-size: 12px; font-weight: 500; transition: all 0.2s; white-space: nowrap; background: transparent; color: var(--text2); }
+  .tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .tab.done { border-color: var(--green); color: var(--green); background: #f0fdf4; }
+  .tab-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* MAIN CONTENT */
+  .main { padding: 16px; max-width: 600px; margin: 0 auto; padding-bottom: 100px; }
+
+  /* SECTION HEADER */
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  .section-icon { font-size: 20px; width: 40px; height: 40px; background: var(--card); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; }
+  .section-title { font-size: 16px; font-weight: 600; color: var(--text); }
+  .section-count { font-size: 12px; color: var(--text2); }
+
+  /* FORM FIELDS */
+  .field { margin-bottom: 14px; }
+  .field-label { font-size: 13px; font-weight: 500; color: var(--text2); margin-bottom: 6px; display: block; }
+  .field-label.required::after { content: ' *'; color: var(--accent); }
+
+  input[type="text"], input[type="date"], input[type="time"], input[type="number"], select, textarea {
+    width: 100%; background: #ffffff; border: 1.5px solid var(--border); color: var(--text);
+    border-radius: var(--radius-sm); padding: 10px 12px; font-size: 15px;
+    transition: border-color 0.2s; -webkit-appearance: none; appearance: none;
+    font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(21,88,214,0.1); }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234a5568' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+  textarea { resize: vertical; min-height: 80px; }
+  input::placeholder { color: var(--text3); }
+
+  /* RADIO BUTTONS styled as pills */
+  .radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
+  .radio-pill { display: inline-block; }
+  .radio-pill input { display: none; }
+  .radio-pill label { display: block; padding: 7px 14px; border-radius: 20px; border: 1.5px solid var(--border); cursor: pointer; font-size: 13px; color: var(--text2); transition: all 0.2s; background: white; }
+  .radio-pill input:checked + label { background: var(--accent2); border-color: var(--accent); color: var(--accent); font-weight: 500; }
+  .radio-pill.green input:checked + label { background: #f0fdf4; border-color: var(--green); color: var(--green); }
+  .radio-pill.red input:checked + label { background: #fef2f2; border-color: var(--red); color: var(--red); }
+  .radio-pill.amber input:checked + label { background: #fffbeb; border-color: var(--amber); color: var(--amber); }
+
+  /* CONDITIONAL FIELD */
+  .conditional { background: #f8faff; border-left: 3px solid var(--accent); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 12px; margin-top: -8px; margin-bottom: 14px; display: none; }
+  .conditional.visible { display: block; }
+
+  /* CARD GROUPS */
+  .field-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+  .field-card-title { font-size: 12px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  /* NAV BUTTONS */
+  .nav-bar { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); padding: 12px 16px; display: flex; gap: 10px; z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,0.06); }
+  .btn { flex: 1; padding: 12px; border-radius: var(--radius-sm); border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-secondary { background: var(--primary); color: var(--text2); border: 1.5px solid var(--border); }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-success { background: var(--green); color: white; }
+  .btn:active { transform: scale(0.97); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 200; opacity: 0; transition: opacity 0.3s; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  /* SUMMARY VIEW */
+  .summary-section { background: white; border-radius: var(--radius); border: 1.5px solid var(--border); margin-bottom: 16px; overflow: hidden; }
+  .summary-section-title { background: var(--surface2); padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--accent); text-transform: uppercase; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+  .summary-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 14px; border-bottom: 1px solid var(--border); gap: 12px; }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-label { font-size: 13px; color: var(--text2); flex: 0 0 auto; max-width: 50%; }
+  .summary-value { font-size: 13px; color: var(--text); text-align: right; font-weight: 500; word-break: break-word; }
+  .summary-value.empty { color: var(--text3); font-style: italic; }
+
+  /* VERDICT */
+  .verdict-card { border-radius: var(--radius); padding: 20px; margin-bottom: 16px; text-align: center; border: 2px solid; }
+  .verdict-card.aanraden { background: #f0fdf4; border-color: var(--green); }
+  .verdict-card.neutraal { background: #fffbeb; border-color: var(--amber); }
+  .verdict-card.afraden { background: #fef2f2; border-color: var(--red); }
+  .verdict-emoji { font-size: 36px; margin-bottom: 8px; }
+  .verdict-title { font-size: 20px; font-weight: 700; }
+  .verdict-card.aanraden .verdict-title { color: var(--green); }
+  .verdict-card.neutraal .verdict-title { color: var(--amber); }
+  .verdict-card.afraden .verdict-title { color: var(--red); }
+
+  /* SEND BUTTON */
+  .btn-send { background: #0f9d58; color: white; font-size: 14px; padding: 14px; border-radius: var(--radius-sm); border: none; width: 100%; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .btn-send:active { transform: scale(0.98); }
+  .sheets-logo { width: 20px; height: 20px; }
+
+  /* SPINNER */
+  .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CONFIG SCREEN */
+  .config-screen { display: none; position: fixed; inset: 0; background: var(--primary); z-index: 300; overflow-y: auto; padding: 20px; }
+  .config-screen.visible { display: block; }
+  .config-close { float: right; background: var(--border); border: none; color: var(--text); padding: 8px 16px; border-radius: var(--radius-sm); cursor: pointer; font-size: 14px; }
+
+  /* LAKDIKTE METER */
+  .lakdikte-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel-input { background: white; border-radius: var(--radius-sm); padding: 10px; border: 1.5px solid var(--border); }
+  .panel-label { font-size: 11px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+  .panel-input input { padding: 6px 8px; font-size: 14px; }
+  .panel-indicator { height: 4px; border-radius: 2px; margin-top: 6px; background: var(--border); }
+  .panel-indicator.ok { background: var(--green); }
+  .panel-indicator.warn { background: var(--amber); }
+  .panel-indicator.bad { background: var(--red); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- CONFIG SCREEN -->
+<div class="config-screen" id="configScreen">
+  <h2 style="margin-bottom:20px;">⚙️ Instellingen</h2>
+  <button class="config-close" onclick="toggleConfig()">Sluiten ✕</button>
+  <br style="clear:both"><br>
+
+  <div class="field">
+    <label class="field-label">Google Sheets Web App URL</label>
+    <input type="text" id="sheetsUrl" placeholder="https://script.google.com/macros/s/.../exec" oninput="saveConfig()">
+    <p style="font-size:12px;color:var(--text2);margin-top:6px;">Plak hier de URL van je Google Apps Script Web App. Zie de instructies in de README.</p>
+  </div>
+
+  <div class="field">
+    <label class="field-label">Jouw naam (adviseur)</label>
+    <input type="text" id="adviseurNaam" placeholder="Bijv. Graziano Laudisio" oninput="saveConfig()">
+  </div>
+
+  <div class="field">
+    <label class="field-label">Rapportnummer (huidig)</label>
+    <input type="number" id="rapportNr" placeholder="250001" oninput="saveConfig()">
+  </div>
+
+  <div style="background:white;border-radius:var(--radius);padding:16px;margin-top:20px;border:1.5px solid var(--border);">
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;">
+      <strong style="color:var(--text);">Hoe Google Sheets koppelen:</strong><br><br>
+      1. Open <a href="https://sheets.google.com" style="color:#5c90c8;">Google Sheets</a> en maak een nieuw blad.<br>
+      2. Ga naar <strong>Extensies → Apps Script</strong>.<br>
+      3. Plak de code uit <code>google-apps-script.js</code> in het script.<br>
+      4. Klik op <strong>Implementeren → Nieuw implementeren → Web App</strong>.<br>
+      5. Stel toegang in op <em>"Iedereen"</em> en kopieer de URL.<br>
+      6. Plak die URL hierboven.
+    </p>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">🚗</div>
+    <div>
+      <div class="header h1" style="font-size:16px;font-weight:600;">AutoKeuring Pro</div>
+      <div class="header-subtitle" id="headerSubtitle">Nieuwe keuring</div>
+    </div>
+  </div>
+  <button class="btn-icon" onclick="toggleConfig()" title="Instellingen">⚙️</button>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar">
+  <div class="progress-info">
+    <span id="progressLabel">Sectie 1 van 11</span>
+    <span id="progressPct">0%</span>
+  </div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabsBar"></div>
+
+<!-- MAIN -->
+<div class="main" id="mainContent"></div>
+
+<!-- NAV -->
+<div class="nav-bar">
+  <button class="btn btn-secondary" id="btnPrev" onclick="prevSection()">← Vorige</button>
+  <button class="btn btn-primary" id="btnNext" onclick="nextSection()">Volgende →</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// DATA DEFINITIONS
+// ============================================================
+const SECTIONS = [
+  {
+    id: 'algemeen', icon: '📋', title: 'Algemene gegevens',
+    fields: [
+      { id: 'rapportnummer', label: 'Rapportnummer', type: 'text', required: true },
+      { id: 'datum_inspectie', label: 'Datum inspectie', type: 'date', required: true },
+      { id: 'tijdstip', label: 'Tijdstip', type: 'time' },
+      { id: 'locatie', label: 'Locatie', type: 'text', placeholder: 'Stad of adres' },
+      { id: 'opdrachtgever', label: 'Opdrachtgever', type: 'text' },
+      { id: 'verkoper', label: 'Verkoper', type: 'text' },
+      { id: 'verkoper_type', label: 'Verkoper type', type: 'dropdown', options: ['Particulier','Dealer','Handelaar'] },
+      { id: 'adviseur', label: 'Adviseur', type: 'text' },
+    ]
+  },
+  {
+    id: 'voertuig', icon: '🚘', title: 'Voertuiggegevens',
+    fields: [
+      { id: 'kenteken', label: 'Kenteken', type: 'text', required: true, placeholder: 'XX-999-X' },
+      { id: 'chassisnummer', label: 'Chassisnummer (VIN)', type: 'text' },
+      { id: 'merk', label: 'Merk', type: 'text', required: true },
+      { id: 'model', label: 'Model', type: 'text', required: true },
+      { id: 'uitvoering', label: 'Uitvoering', type: 'text' },
+      { id: 'segment', label: 'Segment', type: 'dropdown', options: ['A - Mini','B - Klein','C - Compact','D - Middenklasse','E - Luxe','F - Luxe+','J - SUV','M - MPV','S - Sportwagen'] },
+      { id: 'transmissie', label: 'Transmissie', type: 'dropdown', options: ['Handgeschakeld','Automaat','Semi-automaat','CVT'] },
+      { id: 'brandstof', label: 'Brandstof', type: 'dropdown', options: ['Benzine','Diesel','Hybride','Plug-in Hybride','Elektrisch','LPG','CNG'] },
+      { id: 'kleur', label: 'Kleur', type: 'text' },
+      { id: 'datum_productie', label: 'Datum productie', type: 'text', placeholder: 'bijv. 2018' },
+      { id: 'datum_eerste_toelating', label: 'Datum eerste toelating', type: 'date' },
+      { id: 'import', label: 'Import', type: 'dropdown', options: ['Nee','Ja - EU','Ja - Non-EU'] },
+      { id: 'kilometerstand', label: 'Kilometerstand', type: 'text', required: true, placeholder: 'bijv. 150000' },
+      { id: 'oordeel_rdw', label: 'Oordeel RDW', type: 'dropdown', options: ['Logisch','Onlogisch','Geen oordeel'] },
+      { id: 'apk_geldig_tot', label: 'APK geldig tot', type: 'date' },
+      { id: 'verkoopprijs', label: 'Verkoopprijs (€)', type: 'text', placeholder: '0' },
+      { id: 'dagwaarde', label: 'Dagwaarde (€)', type: 'text', placeholder: '0' },
+    ]
+  },
+  {
+    id: 'onderhoud', icon: '🔧', title: 'Onderhoudshistorie',
+    fields: [
+      { id: 'onderhoud_boekje', label: 'Onderhoudsboekje aanwezig?', type: 'dropdown', options: ['Ja','Nee','Gedeeltelijk'] },
+      { id: 'onderhoud_compleet', label: 'Onderhoud compleet gedocumenteerd?', type: 'dropdown', options: ['Ja','Nee','Gedeeltelijk'] },
+      { id: 'aantal_eigenaren', label: 'Aantal vorige eigenaren', type: 'text' },
+      { id: 'laatste_beurt', label: 'Laatste onderhoudsbeurt (datum)', type: 'date' },
+      { id: 'distributie_vervangen', label: 'Distributieriem/ketting vervangen?', type: 'dropdown', options: ['Ja','Nee'], showIf: { field: 'brandstof', values: ['Benzine','Diesel','Hybride','Plug-in Hybride','LPG','CNG'] } },
+      { id: 'distributie_km', label: 'Bij hoeveel km vervangen?', type: 'text', showIf: { field: 'distributie_vervangen', values: ['Ja'] } },
+    ]
+  },
+  {
+    id: 'exterieur', icon: '🚗', title: 'Exterieur',
+    fields: [
+      { id: 'auto_schoon', label: 'Auto schoon en droog?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'staat_carrosserie', label: 'Algemene staat carrosserie', type: 'dropdown', options: ['Excellent','Goed','Redelijk','Matig','Slecht'] },
+      { id: 'roest', label: 'Roest zichtbaar?', type: 'dropdown', options: ['Nee','Ja - Oppervlakkig','Ja - Doorgeroest'] },
+      { id: 'roest_locatie', label: 'Locatie roest', type: 'text', showIf: { field: 'roest', values: ['Ja - Oppervlakkig','Ja - Doorgeroest'] } },
+      { id: 'deukschade', label: 'Deukschade aanwezig?', type: 'dropdown', options: ['Nee','Ja - Klein','Ja - Groot'] },
+      { id: 'deuken_locatie', label: 'Locatie deuken', type: 'text', showIf: { field: 'deukschade', values: ['Ja - Klein','Ja - Groot'] } },
+      { id: 'krasschade', label: 'Krasschade aanwezig?', type: 'dropdown', options: ['Nee','Ja - Oppervlakkig','Ja - Diep'] },
+      { id: 'krassen_locatie', label: 'Locatie krassen', type: 'text', showIf: { field: 'krasschade', values: ['Ja - Oppervlakkig','Ja - Diep'] } },
+      { id: 'portiersloten', label: 'Portiersloten & centrale vergrendeling', type: 'dropdown', options: ['Goed','Defect','Gedeeltelijk defect'] },
+      { id: 'keyless', label: 'Keyless entry/go', type: 'dropdown', options: ['Werkt','Werkt niet','N.v.t.'] },
+      { id: 'deurscharnieren', label: 'Deurscharnieren', type: 'dropdown', options: ['Goed','Speling','Beschadigd'] },
+      { id: 'rubbers', label: 'Deur- & achterklep rubbers', type: 'dropdown', options: ['Goed','Versleten','Beschadigd'] },
+      { id: 'gasveer_achterklep', label: 'Gasveer achterklep', type: 'dropdown', options: ['Goed','Zwak','Defect','N.v.t.'] },
+      { id: 'antenne', label: 'Antenne', type: 'dropdown', options: ['Aanwezig','Beschadigd','Niet aanwezig'] },
+      { id: 'trekhaak', label: 'Trekhaak', type: 'dropdown', options: ['Aanwezig - 7 polig','Aanwezig - 13 polig','Niet aanwezig'] },
+      { id: 'wisser_achter', label: 'Ruitenwisserblad achter', type: 'dropdown', options: ['Goed','Versleten','Beschadigd','N.v.t.'] },
+      { id: 'lichtunit_achter', label: 'Lichtunits achter (verkleuring)', type: 'dropdown', options: ['Goed','Licht verkleurd','Sterk verkleurd'] },
+      { id: 'lichtunit_voor', label: 'Lichtunits voor (verkleuring)', type: 'dropdown', options: ['Goed','Licht verkleurd','Sterk verkleurd'] },
+      { id: 'gasveer_motorkap', label: 'Gasveer motorkap', type: 'dropdown', options: ['Goed','Zwak','Defect'] },
+      { id: 'wisser_voor', label: 'Ruitenwisserbladen voor', type: 'dropdown', options: ['Goed','Versleten','Beschadigd'] },
+      { id: 'panoramadak', label: 'Schuif-/Panorama-/Cabriodak', type: 'dropdown', options: ['Werkt goed','Defect','N.v.t.'] },
+      { id: 'tankklep', label: 'Tankklep', type: 'dropdown', options: ['Goed','Beschadigd','Slot defect'] },
+      { id: 'buitenspiegels', label: 'Buitenspiegels', type: 'dropdown', options: ['Goed','Beschadigd','Elektrisch defect'] },
+      { id: 'voorruit', label: 'Voorruit', type: 'dropdown', options: ['Goed','Steenslag','Barst','Ernstige schade'] },
+      { id: 'overige_ruiten', label: 'Overige ruiten', type: 'dropdown', options: ['Goed','Beschadigd'] },
+      { id: 'koplampen', label: 'Koplampen', type: 'dropdown', options: ['Werken','Links defect','Rechts defect','Beide defect'] },
+      { id: 'mistlampen', label: 'Mistlampen', type: 'dropdown', options: ['Werken','Defect','N.v.t.'] },
+      { id: 'knipperlicht', label: 'Knipperlicht', type: 'dropdown', options: ['Werken','Gedeeltelijk defect','Defect'] },
+      { id: 'achterlicht', label: 'Achterlicht', type: 'dropdown', options: ['Werken','Links defect','Rechts defect','Beide defect'] },
+      { id: 'kentekenverlichting', label: 'Kentekenverlichting', type: 'dropdown', options: ['Werkt','Defect'] },
+      { id: 'velgen', label: 'Velgen', type: 'dropdown', options: ['Goed','Lichte schade','Ernstige schade'] },
+    ]
+  },
+  {
+    id: 'lakwerk', icon: '🎨', title: 'Lakwerk',
+    fields: [
+      { id: 'kleurnaam', label: 'Kleurnaam/code', type: 'text' },
+      { id: 'lak_origineel', label: 'Lakwerk origineel?', type: 'dropdown', options: ['Ja','Nee','Gedeeltelijk'] },
+      { id: 'overgespoten', label: 'Overgespoten panelen', type: 'text', showIf: { field: 'lak_origineel', values: ['Nee','Gedeeltelijk'] } },
+      { id: 'kleurverschil', label: 'Kleurverschillen zichtbaar?', type: 'dropdown', options: ['Nee','Ja'] },
+      { id: 'kleurverschil_locatie', label: 'Locatie kleurverschillen', type: 'text', showIf: { field: 'kleurverschil', values: ['Ja'] } },
+      { id: 'lak_staat', label: 'Lak in goede staat (geen afbladderende lak)?', type: 'dropdown', options: ['Ja','Nee'] },
+    ]
+  },
+  {
+    id: 'lakdikte', icon: '📏', title: 'Lakdikte meting',
+    custom: 'lakdikte'
+  },
+  {
+    id: 'interieur', icon: '💺', title: 'Interieur',
+    fields: [
+      { id: 'staat_interieur', label: 'Algemene staat interieur', type: 'dropdown', options: ['Excellent','Goed','Redelijk','Matig','Slecht'] },
+      { id: 'bekleding_type', label: 'Bekleding type', type: 'dropdown', options: ['Stof','Leder','Half leder','Alcantara'] },
+      { id: 'schade_bekleding', label: 'Schade aan bekleding?', type: 'dropdown', options: ['Nee','Ja - Klein','Ja - Groot'] },
+      { id: 'bekleding_locatie', label: 'Locatie schade bekleding', type: 'text', showIf: { field: 'schade_bekleding', values: ['Ja - Klein','Ja - Groot'] } },
+      { id: 'vloermatten', label: 'Vloermatten aanwezig en schoon?', type: 'dropdown', options: ['Ja','Nee'], note: true },
+      { id: 'vocht', label: 'Vochtvlekken/schimmel aanwezig?', type: 'dropdown', options: ['Nee','Ja'] },
+      { id: 'vocht_locatie', label: 'Locatie vocht/schimmel', type: 'text', showIf: { field: 'vocht', values: ['Ja'] } },
+      { id: 'geur', label: 'Onprettige geuren?', type: 'dropdown', options: ['Nee','Ja - Rook','Ja - Vocht','Ja - Anders'] },
+      { id: 'gordels', label: 'Alle gordels functioneel?', type: 'dropdown', options: ['Ja','Nee'] },
+    ]
+  },
+  {
+    id: 'dashboard', icon: '🖥️', title: 'Dashboard & diagnose',
+    fields: [
+      { id: 'lampjes_contact', label: 'Waarschuwingslampjes bij contact aan', type: 'text', placeholder: 'bijv. motor, ABS, airbag' },
+      { id: 'lampjes_doven', label: 'Alle lampjes doven na starten?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'lampjes_blijven', label: 'Welke lampjes blijven branden?', type: 'text', showIf: { field: 'lampjes_doven', values: ['Nee'] } },
+      { id: 'airco', label: 'Airco werkt correct?', type: 'dropdown', options: ['Ja','Nee','N.v.t.'] },
+      { id: 'verwarming', label: 'Verwarming werkt correct?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'el_ramen', label: 'Alle elektrische ramen werken?', type: 'dropdown', options: ['Ja','Nee','N.v.t.'] },
+      { id: 'centrale_vergrendeling', label: 'Centrale vergrendeling werkt?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'schakelaars', label: 'Alle schakelaars en knoppen functioneel?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'radio_nav', label: 'Radio/navigatie werkt?', type: 'dropdown', options: ['Ja','Nee','N.v.t.'] },
+      { id: 'obd_scan', label: 'OBD scan uitgevoerd?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'foutcodes', label: 'Foutcodes aanwezig?', type: 'dropdown', options: ['Nee','Ja'], showIf: { field: 'obd_scan', values: ['Ja'] } },
+      { id: 'foutcodes_tekst', label: 'Foutcodes (omschrijving)', type: 'text', showIf: { field: 'foutcodes', values: ['Ja'] } },
+    ]
+  },
+  {
+    id: 'motorkap', icon: '🔩', title: 'Onder de motorkap',
+    fields: [
+      { id: 'motortype', label: 'Motortype', type: 'text', placeholder: 'bijv. 1.5 TDCi 120pk' },
+      { id: 'motorruimte_schoon', label: 'Motorruimte schoon?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'olieniveau', label: 'Olieniveau correct?', type: 'dropdown', options: ['Ja','Nee - Te laag','Nee - Te hoog'] },
+      { id: 'olie_kleur', label: 'Olie kleur', type: 'dropdown', options: ['Schoon/amber','Donker','Zwart','Melkachtig'] },
+      { id: 'koelvloeistof', label: 'Koelvloeistof niveau correct?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'koelvloeistof_kleur', label: 'Koelvloeistof kleur', type: 'dropdown', options: ['Normaal','Roestig','Troebel'] },
+      { id: 'remvloeistof', label: 'Remvloeistof niveau correct?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'lekken', label: 'Lekken zichtbaar?', type: 'dropdown', options: ['Nee','Ja'] },
+      { id: 'lekken_locatie', label: 'Locatie/type lekkage', type: 'text', showIf: { field: 'lekken', values: ['Ja'] } },
+      { id: 'slangen_riemen', label: 'Slangen en riemen in goede staat?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'accu', label: 'Accu staat', type: 'dropdown', options: ['Goed','Matig','Slecht'] },
+    ]
+  },
+  {
+    id: 'proefrit', icon: '🏎️', title: 'Proefrit & onderstel',
+    fields: [
+      { id: 'proefrit', label: 'Proefrit gemaakt?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'motor_start', label: 'Motor start gemakkelijk?', type: 'dropdown', options: ['Ja','Nee'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'stationair', label: 'Onregelmatig stationair toerental?', type: 'dropdown', options: ['Nee','Ja'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'schakelen', label: 'Schakelen soepel?', type: 'dropdown', options: ['Ja','Nee'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'versnellingsbak', label: 'Versnellingsbak type', type: 'dropdown', options: ['Handgeschakeld','Automaat','DSG/PDK','CVT'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'koppeling', label: 'Koppeling in goede staat?', type: 'dropdown', options: ['Ja','Nee','N.v.t.'], showIf: { field: 'versnellingsbak', values: ['Handgeschakeld'] } },
+      { id: 'trillingen', label: 'Trillingen tijdens rijden?', type: 'dropdown', options: ['Nee','Ja'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'stuurgedrag', label: 'Stuurgedrag correct?', type: 'dropdown', options: ['Ja','Nee - Trekt','Nee - Speling'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'remmen', label: 'Remmen goed?', type: 'dropdown', options: ['Ja','Nee - Zwak','Nee - Trekt scheef'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'geluiden', label: 'Ongebruikelijke geluiden?', type: 'dropdown', options: ['Nee','Ja'], showIf: { field: 'proefrit', values: ['Ja'] } },
+      { id: 'geluiden_beschrijving', label: 'Beschrijving geluiden', type: 'text', showIf: { field: 'geluiden', values: ['Ja'] } },
+      { id: 'onderstel', label: 'Onderstel geïnspecteerd?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'roest_onderstel', label: 'Roest aan onderstel?', type: 'dropdown', options: ['Nee','Ja - Oppervlakkig','Ja - Ernstig'], showIf: { field: 'onderstel', values: ['Ja'] } },
+      { id: 'beschadigingen_onderstel', label: 'Beschadigingen onderstel?', type: 'dropdown', options: ['Nee','Ja'], showIf: { field: 'onderstel', values: ['Ja'] } },
+      { id: 'schokdempers', label: 'Schokdempers in goede staat?', type: 'dropdown', options: ['Ja','Nee','Onbekend'], showIf: { field: 'onderstel', values: ['Ja'] } },
+      { id: 'uitlaat', label: 'Uitlaat in goede staat?', type: 'dropdown', options: ['Ja','Nee'], showIf: { field: 'onderstel', values: ['Ja'] } },
+    ]
+  },
+  {
+    id: 'documenten', icon: '📄', title: 'Accessoires & documenten',
+    fields: [
+      { id: 'reservewiel', label: 'Reservewiel aanwezig?', type: 'dropdown', options: ['Ja','Nee','Bandenkit'] },
+      { id: 'gereedschap', label: 'Gereedschap compleet?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'sleutels', label: 'Aantal sleutels', type: 'dropdown', options: ['1','2','3+'] },
+      { id: 'handleidingen', label: 'Handleidingen aanwezig?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'kenteken1', label: 'Kentekenbewijs deel 1 aanwezig?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'kenteken2', label: 'Kentekenbewijs deel 2 aanwezig?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'apk_datum', label: 'APK geldig tot', type: 'date' },
+      { id: 'apk_status', label: 'APK status', type: 'dropdown', options: ['Geldig','Bijna verlopen','Verlopen'] },
+      { id: 'vin_overeen', label: 'VIN nummer komt overeen?', type: 'dropdown', options: ['Ja','Nee'] },
+      { id: 'km_aannemelijk', label: 'Kilometerstand aannemelijk?', type: 'dropdown', options: ['Ja','Twijfelachtig','Nee'] },
+    ]
+  },
+  {
+    id: 'eindoordeel', icon: '⭐', title: 'Eindoordeel',
+    fields: [
+      { id: 'algemeen_oordeel', label: 'Algemeen eindoordeel', type: 'dropdown', options: ['Uitstekend','Goed','Redelijk','Matig','Slecht'], required: true },
+      { id: 'gevonden_gebreken', label: 'Gevonden gebreken', type: 'textarea' },
+      { id: 'reparatiekosten', label: 'Geschatte reparatiekosten (€)', type: 'text', placeholder: '0' },
+      { id: 'aanbevolen_prijs', label: 'Aanbevolen aankoopprijs (€)', type: 'text', placeholder: '0' },
+      { id: 'advies', label: 'Advies', type: 'dropdown', options: ['Aanraden','Neutraal','Afraden'], required: true },
+      { id: 'opmerkingen', label: 'Extra opmerkingen', type: 'textarea' },
+    ]
+  },
+];
+
+const LAKDIKTE_PANELEN = ['Motorkap','Linkervoor spatbord','Rechtersvoor spatbord','Voorportier links','Voorportier rechts','Achterportier links','Achterportier rechts','Linker achterspatbord','Rechter achterspatbord','Kofferdeksel/achterklep','Dak'];
+
+// ============================================================
+// STATE
+// ============================================================
+let currentSection = 0;
+let formData = {};
+let lakdikteData = {};
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  loadConfig();
+  setDefaultRapportNummer();
+  setTodayDate();
+  renderTabs();
+  renderSection();
+}
+
+function setDefaultRapportNummer() {
+  const nr = localStorage.getItem('config_rapportNr') || '250001';
+  formData['rapportnummer'] = nr;
+}
+
+function setTodayDate() {
+  const today = new Date().toISOString().split('T')[0];
+  formData['datum_inspectie'] = today;
+  const adviseur = localStorage.getItem('config_adviseur') || '';
+  if (adviseur) formData['adviseur'] = adviseur;
+}
+
+function loadConfig() {
+  document.getElementById('sheetsUrl').value = localStorage.getItem('config_sheetsUrl') || '';
+  document.getElementById('adviseurNaam').value = localStorage.getItem('config_adviseur') || '';
+  document.getElementById('rapportNr').value = localStorage.getItem('config_rapportNr') || '250001';
+}
+
+function saveConfig() {
+  localStorage.setItem('config_sheetsUrl', document.getElementById('sheetsUrl').value);
+  localStorage.setItem('config_adviseur', document.getElementById('adviseurNaam').value);
+  localStorage.setItem('config_rapportNr', document.getElementById('rapportNr').value);
+}
+
+function toggleConfig() {
+  document.getElementById('configScreen').classList.toggle('visible');
+}
+
+// ============================================================
+// TABS
+// ============================================================
+function renderTabs() {
+  const bar = document.getElementById('tabsBar');
+  bar.innerHTML = SECTIONS.map((s, i) => {
+    const done = isSectionDone(i);
+    const active = i === currentSection;
+    return `<button class="tab ${active ? 'active' : ''} ${done && !active ? 'done' : ''}" onclick="goToSection(${i})">
+      <span class="tab-dot"></span>${s.icon} ${s.title}
+    </button>`;
+  }).join('');
+  // Scroll active tab into view
+  setTimeout(() => {
+    const activeTab = bar.querySelector('.tab.active');
+    if (activeTab) activeTab.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }, 50);
+}
+
+function isSectionDone(idx) {
+  const sec = SECTIONS[idx];
+  if (!sec.fields) return Object.keys(lakdikteData).length > 0;
+  return sec.fields.filter(f => f.required).every(f => formData[f.id]);
+}
+
+// ============================================================
+// RENDER SECTION
+// ============================================================
+function renderSection() {
+  const sec = SECTIONS[currentSection];
+  const main = document.getElementById('mainContent');
+
+  // Update progress
+  const pct = Math.round(((currentSection) / (SECTIONS.length)) * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('progressLabel').textContent = `Sectie ${currentSection + 1} van ${SECTIONS.length}`;
+
+  // Update header
+  const v = formData['merk'] && formData['model'] ? `${formData['merk']} ${formData['model']}` : 'Nieuwe keuring';
+  document.getElementById('headerSubtitle').textContent = v;
+
+  // Nav buttons
+  document.getElementById('btnPrev').style.display = currentSection === 0 ? 'none' : '';
+  document.getElementById('btnNext').textContent = currentSection === SECTIONS.length - 1 ? '✓ Afronden' : 'Volgende →';
+  document.getElementById('btnNext').className = currentSection === SECTIONS.length - 1 ? 'btn btn-success' : 'btn btn-primary';
+
+  if (sec.custom === 'lakdikte') {
+    main.innerHTML = renderLakdikte();
+    initLakdikte();
+    renderTabs();
+    return;
+  }
+
+  let html = `<div class="section-header">
+    <div class="section-icon">${sec.icon}</div>
+    <div>
+      <div class="section-title">${sec.title}</div>
+      <div class="section-count">${sec.fields.length} velden</div>
+    </div>
+  </div>`;
+
+  sec.fields.forEach(f => {
+    html += renderField(f);
+  });
+
+  main.innerHTML = html;
+  attachListeners();
+  updateConditionals();
+  renderTabs();
+  window.scrollTo(0, 0);
+}
+
+function renderField(f) {
+  const val = formData[f.id] || '';
+  const isHidden = shouldHide(f);
+  const condClass = f.showIf ? 'conditional' : '';
+
+  let input = '';
+  if (f.type === 'dropdown') {
+    input = `<select id="${f.id}" onchange="updateField('${f.id}', this.value)">
+      <option value="">— selecteer —</option>
+      ${f.options.map(o => `<option value="${o}" ${val === o ? 'selected' : ''}>${o}</option>`).join('')}
+    </select>`;
+  } else if (f.type === 'textarea') {
+    input = `<textarea id="${f.id}" placeholder="${f.placeholder || ''}" oninput="updateField('${f.id}', this.value)">${val}</textarea>`;
+  } else {
+    input = `<input type="${f.type}" id="${f.id}" value="${val}" placeholder="${f.placeholder || ''}" oninput="updateField('${f.id}', this.value)" onchange="updateField('${f.id}', this.value)">`;
+  }
+
+  const wrapper = f.showIf ? `<div class="conditional ${isHidden ? '' : 'visible'}" id="cond_${f.id}">` : '<div>';
+
+  return `${wrapper}<div class="field">
+    <label class="field-label ${f.required ? 'required' : ''}">${f.label}</label>
+    ${input}
+  </div></div>`;
+}
+
+function shouldHide(f) {
+  if (!f.showIf) return false;
+  const depVal = formData[f.showIf.field] || '';
+  return !f.showIf.values.includes(depVal);
+}
+
+function attachListeners() {}
+
+function updateConditionals() {
+  const sec = SECTIONS[currentSection];
+  if (!sec.fields) return;
+  sec.fields.forEach(f => {
+    if (!f.showIf) return;
+    const el = document.getElementById('cond_' + f.id);
+    if (!el) return;
+    el.classList.toggle('visible', !shouldHide(f));
+  });
+}
+
+function updateField(id, value) {
+  formData[id] = value;
+  updateConditionals();
+}
+
+// ============================================================
+// LAKDIKTE
+// ============================================================
+function renderLakdikte() {
+  return `<div class="section-header">
+    <div class="section-icon">📏</div>
+    <div>
+      <div class="section-title">Lakdikte meting</div>
+      <div class="section-count">Vul waarden in μm</div>
+    </div>
+  </div>
+  <div style="background:white;border-radius:var(--radius);padding:12px;margin-bottom:16px;border:1.5px solid var(--border);">
+    <p style="font-size:13px;color:var(--text2);line-height:1.6;">
+      Normaalwaarden: <strong style="color:var(--green);">80–130 μm</strong> = origineel lak<br>
+      <span style="color:var(--amber);">130–200 μm</span> = gespoten / ongespoten<br>
+      <span style="color:var(--red);">&gt;200 μm</span> = dik gespoten / mogelijk schade
+    </p>
+  </div>
+  <div class="lakdikte-grid">
+    ${LAKDIKTE_PANELEN.map(p => `
+    <div class="panel-input">
+      <div class="panel-label">${p}</div>
+      <input type="number" placeholder="μm" id="ld_${p.replace(/\s+/g,'_')}" value="${lakdikteData[p] || ''}" 
+        oninput="updateLakdikte('${p}', this.value, this)" style="padding:6px 8px;font-size:15px;">
+      <div class="panel-indicator" id="ldi_${p.replace(/\s+/g,'_')}"></div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function initLakdikte() {
+  LAKDIKTE_PANELEN.forEach(p => {
+    const key = p.replace(/\s+/g, '_');
+    const val = lakdikteData[p];
+    if (val) updateLakdikteIndicator(p, val);
+  });
+}
+
+function updateLakdikte(panel, val, input) {
+  lakdikteData[panel] = val ? parseFloat(val) : '';
+  updateLakdikteIndicator(panel, val);
+}
+
+function updateLakdikteIndicator(panel, val) {
+  const key = panel.replace(/\s+/g, '_');
+  const el = document.getElementById('ldi_' + key);
+  if (!el) return;
+  const n = parseFloat(val);
+  if (!n) { el.className = 'panel-indicator'; return; }
+  if (n <= 130) el.className = 'panel-indicator ok';
+  else if (n <= 200) el.className = 'panel-indicator warn';
+  else el.className = 'panel-indicator bad';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function goToSection(idx) {
+  saveCurrentSection();
+  currentSection = idx;
+  renderSection();
+}
+
+function nextSection() {
+  saveCurrentSection();
+  if (currentSection < SECTIONS.length - 1) {
+    currentSection++;
+    renderSection();
+  } else {
+    showSummary();
+  }
+}
+
+function prevSection() {
+  saveCurrentSection();
+  if (currentSection > 0) {
+    currentSection--;
+    renderSection();
+  }
+}
+
+function saveCurrentSection() {
+  const sec = SECTIONS[currentSection];
+  if (!sec.fields) return;
+  sec.fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    if (el) formData[f.id] = el.value;
+  });
+}
+
+// ============================================================
+// SUMMARY & SEND
+// ============================================================
+function showSummary() {
+  saveCurrentSection();
+  const main = document.getElementById('mainContent');
+  const advies = formData['advies'] || 'neutraal';
+  const adviesClass = advies.toLowerCase() === 'aanraden' ? 'aanraden' : advies.toLowerCase() === 'afraden' ? 'afraden' : 'neutraal';
+  const emoji = adviesClass === 'aanraden' ? '✅' : adviesClass === 'afraden' ? '❌' : '⚠️';
+
+  let html = `<div class="verdict-card ${adviesClass}">
+    <div class="verdict-emoji">${emoji}</div>
+    <div class="verdict-title">${advies || '—'}</div>
+    <div style="font-size:13px;color:var(--text2);margin-top:6px;">${formData['merk'] || ''} ${formData['model'] || ''} · ${formData['kenteken'] || ''}</div>
+  </div>`;
+
+  // Summary sections
+  SECTIONS.forEach(sec => {
+    if (!sec.fields) {
+      // Lakdikte
+      const entries = Object.entries(lakdikteData).filter(([k,v]) => v);
+      if (entries.length === 0) return;
+      html += `<div class="summary-section">
+        <div class="summary-section-title">${sec.icon} ${sec.title}</div>
+        ${entries.map(([k,v]) => `<div class="summary-row"><span class="summary-label">${k}</span><span class="summary-value">${v} μm</span></div>`).join('')}
+      </div>`;
+      return;
+    }
+    const visibleFields = sec.fields.filter(f => !shouldHideGlobal(f));
+    if (visibleFields.length === 0) return;
+    html += `<div class="summary-section">
+      <div class="summary-section-title">${sec.icon} ${sec.title}</div>
+      ${visibleFields.map(f => {
+        const v = formData[f.id];
+        return `<div class="summary-row">
+          <span class="summary-label">${f.label}</span>
+          <span class="summary-value ${!v ? 'empty' : ''}">${v || 'niet ingevuld'}</span>
+        </div>`;
+      }).join('')}
+    </div>`;
+  });
+
+  // Send button
+  html += `<button class="btn-send" onclick="sendToSheets()">
+    <svg class="sheets-logo" viewBox="0 0 24 24" fill="none">
+      <rect width="24" height="24" rx="4" fill="#0F9D58"/>
+      <path d="M6 8h12M6 12h12M6 16h8" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Opslaan naar Google Sheets
+  </button>
+  <button class="btn btn-secondary" onclick="currentSection=0;renderSection();" style="width:100%;margin-bottom:12px;">← Terug naar bewerken</button>
+  <button class="btn" style="width:100%;background:var(--accent2);color:var(--accent);border:1.5px solid var(--accent);margin-bottom:12px;" onclick="newKeuring()">+ Nieuwe keuring starten</button>`;
+
+  main.innerHTML = html;
+
+  // Hide nav
+  document.getElementById('btnPrev').style.display = 'none';
+  document.getElementById('btnNext').style.display = 'none';
+}
+
+function shouldHideGlobal(f) {
+  if (!f.showIf) return false;
+  return !f.showIf.values.includes(formData[f.showIf.field] || '');
+}
+
+async function sendToSheets() {
+  const url = localStorage.getItem('config_sheetsUrl');
+  if (!url) {
+    showToast('⚠️ Stel eerst de Google Sheets URL in via ⚙️');
+    return;
+  }
+
+  const payload = {
+    timestamp: new Date().toISOString(),
+    ...formData,
+    lakdikte: lakdikteData,
+  };
+
+  const btn = document.querySelector('.btn-send');
+  const original = btn.innerHTML;
+  btn.innerHTML = '<div class="spinner"></div> Verzenden...';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    showToast('✅ Opgeslagen in Google Sheets!');
+    incrementRapportNummer();
+    btn.innerHTML = '✅ Verzonden!';
+    btn.style.background = 'var(--green)';
+  } catch (e) {
+    showToast('❌ Fout bij verzenden: ' + e.message);
+    btn.innerHTML = original;
+    btn.disabled = false;
+  }
+}
+
+function incrementRapportNummer() {
+  const current = parseInt(localStorage.getItem('config_rapportNr') || '250001');
+  const next = current + 1;
+  localStorage.setItem('config_rapportNr', next.toString());
+}
+
+function newKeuring() {
+  if (!confirm('Nieuwe keuring starten? Huidige gegevens worden gewist.')) return;
+  formData = {};
+  lakdikteData = {};
+  currentSection = 0;
+  setDefaultRapportNummer();
+  setTodayDate();
+  document.getElementById('btnPrev').style.display = '';
+  document.getElementById('btnNext').style.display = '';
+  renderSection();
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
